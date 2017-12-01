@@ -9,7 +9,7 @@
      #define DPRINTF printf
 #endif
 
-boost::shared_ptr<urdf::ModelInterface> XBot::XBotCoreModel::loadURDF(const std::string& filename)
+std::shared_ptr<urdf::ModelInterface> XBot::XBotCoreModel::loadURDF(const std::string& filename)
 {
 
     // get the entire file
@@ -30,7 +30,7 @@ boost::shared_ptr<urdf::ModelInterface> XBot::XBotCoreModel::loadURDF(const std:
     else
     {
         throw std::runtime_error("Could not open file " + filename + " for parsing.");
-        return boost::shared_ptr<urdf::ModelInterface>();
+        return std::shared_ptr<urdf::ModelInterface>();
     }
 }
 
@@ -40,9 +40,9 @@ bool XBot::XBotCoreModel::parseSRDF() {
     std::vector<DisabledJoint> actual_disabled_joints = getDisabledJoints();
 
     int group_num = actual_groups.size();
-    
+
     srdf_advr::Model::Group chains_group;
-    
+
     // find controlled_joints group and chains group
     for(int i = 0; i < group_num; i++) {
         if( actual_groups[i].name_ == "controlled_joints"){
@@ -60,8 +60,8 @@ bool XBot::XBotCoreModel::parseSRDF() {
     for(int i = 0; i < chain_num; i++) {
         chain_names[i] = (chains_group.subgroups_[i]);
     }
-    
-    
+
+
 
     // put the disabled joint in the disabled_joint_names data structure
     int disabled_joint_num = actual_disabled_joints.size();
@@ -102,7 +102,7 @@ bool XBot::XBotCoreModel::parseSRDF() {
             // IMU
             if(actual_groups[i].name_ == "imu_sensors") {
                 for(int j = 0; j < actual_groups[i].joints_.size(); j++) {
-                    imu_sensors[actual_groups[i].joints_[j]] = -1; // TBD meaningful IDs? -1 means no ecat slave? 
+                    imu_sensors[actual_groups[i].joints_[j]] = -1; // TBD meaningful IDs? -1 means no ecat slave?
                 }
             }
             // LEGS
@@ -129,7 +129,7 @@ bool XBot::XBotCoreModel::get_joints_in_chain(  std::string base_link,
                                                 std::vector<std::string>& enabled_joints_in_chain,
                                                 std::vector<std::string>& disabled_joints_in_chain)
 {
-    
+
 //     getGroups().at("controlled_joints")->joints_
 
     KDL::Chain actual_chain;
@@ -138,22 +138,22 @@ bool XBot::XBotCoreModel::get_joints_in_chain(  std::string base_link,
         for( int i = 0; i < segments_num; i++) {
             KDL::Segment actual_segment = actual_chain.getSegment(i);
             KDL::Joint actual_joint = actual_segment.getJoint();
-            
+
             // Check if the joint is to be included in the chain, i.e. it is either a revolute,
             // prismatic, or fixed joint belonging to the controlled_joints group
-            
+
             bool is_valid_joint = false;
-            
+
             // Check if joint is revolute or prismatic
             is_valid_joint = actual_joint.getTypeName() == "RotAxis"   ||
                  actual_joint.getTypeName() == "TransAxis";
-            
+
             // Check if joint belongs to controlled_joints group
-            is_valid_joint = is_valid_joint || ( std::find(controlled_joints.begin(), 
-                                                         controlled_joints.end(), 
+            is_valid_joint = is_valid_joint || ( std::find(controlled_joints.begin(),
+                                                         controlled_joints.end(),
                                                          actual_joint.getName()) != controlled_joints.end() );
 
-            
+
             // if the joint is revolute or prismatic
             if ( is_valid_joint /* ||  // TBD check this if needed
                  actual_joint.getName() == "l_handj" || actual_joint.getName() == "r_handj"*/) {   // TBD check the model for the hands
@@ -221,8 +221,8 @@ void XBot::XBotCoreModel::parseJointMap(void)
     }
 }
 
-bool XBot::XBotCoreModel::init(const std::string& urdf_filename, 
-                               const std::string& srdf_filename, 
+bool XBot::XBotCoreModel::init(const std::string& urdf_filename,
+                               const std::string& srdf_filename,
                                const std::string& joint_map_config)
 {
     // SRDF path
@@ -233,7 +233,7 @@ bool XBot::XBotCoreModel::init(const std::string& urdf_filename,
 
     // load URDF model from file
     urdf_model = loadURDF(urdf_filename);
-    
+
     // check that all prismatic and revolute joints have their limits specified in the URDF!
     bool joint_limits_ok = check_joint_limits();
 
@@ -248,13 +248,13 @@ bool XBot::XBotCoreModel::init(const std::string& urdf_filename,
 
     // load SRDF model from file
     bool ret = this->initFile(*urdf_model, srdf_filename);
-    
+
     // save urdf and srdf as strings (can be useful to have!)
     std::ifstream t_urdf(urdf_filename);
     std::stringstream buffer_urdf;
     buffer_urdf << t_urdf.rdbuf();
     urdf_string = buffer_urdf.str();
-    
+
     std::ifstream t_srdf(urdf_filename);
     std::stringstream buffer_srdf;
     buffer_srdf << t_srdf.rdbuf();
@@ -274,7 +274,7 @@ bool XBot::XBotCoreModel::init(const std::string& urdf_filename, const std::stri
 
     // load URDF model from file
     urdf_model = loadURDF(urdf_filename);
-    
+
     // check that all prismatic and revolute joints have their limits specified in the URDF!
     bool joint_limits_ok = check_joint_limits();
 
@@ -312,7 +312,7 @@ void XBot::XBotCoreModel::generate_robot(void)
             joint_num += enabled_joints_id_aux.size();
         }
     }
-    
+
     // initialize robot map specific data
     int pos = 0;
     for(const auto& c : robot) {
@@ -392,20 +392,17 @@ const std::vector< std::string >& XBot::XBotCoreModel::get_arms_chain() const
 bool XBot::XBotCoreModel::check_joint_limits() const
 {
     for( const auto& j_pair : urdf_model->joints_ ){
-        
+
         const urdf::Joint& joint = *j_pair.second;
-        
+
         if(joint.type == urdf::Joint::REVOLUTE || joint.type == urdf::Joint::PRISMATIC){
             if(joint.limits->upper <= joint.limits->lower){
                 std::cerr << "ERROR in " << __func__ << "! All revolute and prismatic joints must have their joint limits specified inside the URDF, with upper limit > lower limit." << std::endl;
                 return false;
             }
         }
-        
+
     }
-    
+
     return true;
 }
-
-
-

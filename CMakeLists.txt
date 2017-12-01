@@ -1,4 +1,4 @@
-# 
+#
 #  Copyright (C) 2016 IIT-ADVR
 #  Author: Enrico Mingo, Luca Muratore
 #  email: enrico.mingo@iit.it, luca.muratore@iit.it
@@ -57,11 +57,11 @@ link_directories(SYSTEM ${kdl_parser_LIBRARY_DIRS})
 message(STATUS "kdl_parser_LIBRARY_DIRS: ${kdl_parser_LIBRARY_DIRS}")
 message(STATUS "kdl_parser_LIBRARIES: ${kdl_parser_LIBRARIES}")
 
-FIND_PACKAGE(Boost REQUIRED)
+#FIND_PACKAGE(Boost REQUIRED)
 
-INCLUDE_DIRECTORIES(include 
-                    ${srdfdom_advr_INCLUDE_DIRS} 
-                    ${urdfdom_INCLUDE_DIRS} 
+INCLUDE_DIRECTORIES(include
+                    ${srdfdom_advr_INCLUDE_DIRS}
+                    ${urdfdom_INCLUDE_DIRS}
                     ${kdl_parser_INCLUDE_DIRS})
 
 # for every file in INCLUDES CMake already sets the property HEADER_FILE_ONLY
@@ -69,13 +69,13 @@ file(GLOB_RECURSE XBotCoreModel_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/include" *
 
 ADD_LIBRARY(XBotCoreModel SHARED ${XBotCoreModel_INCLUDES} src/XBotCoreModel.cpp)
 
-TARGET_LINK_LIBRARIES(XBotCoreModel ${srdfdom_advr_LIBRARIES} 
+TARGET_LINK_LIBRARIES(XBotCoreModel ${srdfdom_advr_LIBRARIES}
                                     ${urdfdom_LIBRARIES}
                                     ${Boost_LIBRARIES}
                                     yaml-cpp
                                     ${kdl_parser_LIBRARIES}
                                     )
-                                    
+
 target_include_directories( XBotCoreModel PUBLIC
                                 ${srdfdom_advr_INCLUDE_DIRS}
                                 ${urdfdom_INCLUDE_DIRS}
