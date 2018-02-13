@@ -9,16 +9,12 @@
      #define DPRINTF printf
 #endif
 
-std::shared_ptr<urdf::ModelInterface> XBot::XBotCoreModel::loadURDF(const std::string& filename)
-{
-
+std::shared_ptr<urdf::ModelInterface> XBot::XBotCoreModel::loadURDF(const std::string &filename) {
     // get the entire file
     std::string xml_string;
     std::fstream xml_file(filename.c_str(), std::fstream::in);
-    if (xml_file.is_open())
-    {
-        while (xml_file.good())
-        {
+    if (xml_file.is_open()) {
+        while (xml_file.good()) {
         std::string line;
         std::getline( xml_file, line);
         xml_string += (line + "\n");
@@ -26,16 +22,13 @@ std::shared_ptr<urdf::ModelInterface> XBot::XBotCoreModel::loadURDF(const std::s
         xml_file.close();
 
         return urdf::parseURDF(xml_string);
-    }
-    else
-    {
+    } else {
         throw std::runtime_error("Could not open file " + filename + " for parsing.");
         return std::shared_ptr<urdf::ModelInterface>();
     }
 }
 
 bool XBot::XBotCoreModel::parseSRDF() {
-
     std::vector<Group> actual_groups = getGroups();
     std::vector<DisabledJoint> actual_disabled_joints = getDisabledJoints();
 
@@ -61,8 +54,6 @@ bool XBot::XBotCoreModel::parseSRDF() {
         chain_names[i] = (chains_group.subgroups_[i]);
     }
 
-
-
     // put the disabled joint in the disabled_joint_names data structure
     int disabled_joint_num = actual_disabled_joints.size();
     disabled_joint_names.resize(disabled_joint_num);
@@ -85,11 +76,9 @@ bool XBot::XBotCoreModel::parseSRDF() {
                                       actual_groups[i].chains_[0].second,
                                       enabled_joints_in_chains[actual_groups[i].name_],
                                       disabled_joints_in_chains[actual_groups[i].name_]) ) {
-
                 DPRINTF("ERROR: get_joints_in_chain() failed\n");
                 return false;
             }
-
         }
         // NOTE not a kinematic chain : check for FT, IMU or other groups
         else {
@@ -119,7 +108,6 @@ bool XBot::XBotCoreModel::parseSRDF() {
             }
         // TBD IMU
         }
-
     }
     return true;
 }
@@ -127,9 +115,7 @@ bool XBot::XBotCoreModel::parseSRDF() {
 bool XBot::XBotCoreModel::get_joints_in_chain(  std::string base_link,
                                                 std::string tip_link,
                                                 std::vector<std::string>& enabled_joints_in_chain,
-                                                std::vector<std::string>& disabled_joints_in_chain)
-{
-
+                                              std::vector<std::string> &disabled_joints_in_chain) {
 //     getGroups().at("controlled_joints")->joints_
 
     KDL::Chain actual_chain;
@@ -153,11 +139,9 @@ bool XBot::XBotCoreModel::get_joints_in_chain(  std::string base_link,
                                                          controlled_joints.end(),
                                                          actual_joint.getName()) != controlled_joints.end() );
 
-
             // if the joint is revolute or prismatic
             if ( is_valid_joint /* ||  // TBD check this if needed
                  actual_joint.getName() == "l_handj" || actual_joint.getName() == "r_handj"*/) {   // TBD check the model for the hands
-
                 // if the joint is enabled
                 if( !(std::find(disabled_joint_names.begin(), disabled_joint_names.end(), actual_joint.getName()) != disabled_joint_names.end() ) ) {
                     enabled_joints_in_chain.push_back(actual_joint.getName());
@@ -176,8 +160,7 @@ bool XBot::XBotCoreModel::get_joints_in_chain(  std::string base_link,
     return false;
 }
 
-bool XBot::XBotCoreModel::get_enabled_joints_in_chain( std::string chain_name, std::vector<std::string>& enabled_joints) const
-{
+bool XBot::XBotCoreModel::get_enabled_joints_in_chain(std::string chain_name, std::vector<std::string> &enabled_joints) const {
     // check if the chain exists
     if( enabled_joints_in_chains.count(chain_name) ) {
         enabled_joints = enabled_joints_in_chains.at(chain_name);
@@ -189,8 +172,7 @@ bool XBot::XBotCoreModel::get_enabled_joints_in_chain( std::string chain_name, s
     return false;
 }
 
-bool XBot::XBotCoreModel::get_disabled_joints_in_chain( std::string chain_name, std::vector<std::string>& disabled_joints) const
-{
+bool XBot::XBotCoreModel::get_disabled_joints_in_chain(std::string chain_name, std::vector<std::string> &disabled_joints) const {
     // check if the chain exists
     if( enabled_joints_in_chains.count(chain_name) ) {
         disabled_joints = enabled_joints_in_chains.at(chain_name);
@@ -202,8 +184,7 @@ bool XBot::XBotCoreModel::get_disabled_joints_in_chain( std::string chain_name, 
     return false;
 }
 
-void XBot::XBotCoreModel::parseJointMap(void)
-{
+void XBot::XBotCoreModel::parseJointMap(void) {
     // read the joint map config file -> we choose to separate it from the one used by XBotCore and ec_boards_iface
     YAML::Node joint_map_cfg = YAML::LoadFile(joint_map_config_path);
     const YAML::Node& joint_map = joint_map_cfg["joint_map"];
@@ -223,8 +204,7 @@ void XBot::XBotCoreModel::parseJointMap(void)
 
 bool XBot::XBotCoreModel::init(const std::string& urdf_filename,
                                const std::string& srdf_filename,
-                               const std::string& joint_map_config)
-{
+                               const std::string &joint_map_config) {
     // SRDF path
     srdf_path = srdf_filename;
 
@@ -261,19 +241,19 @@ bool XBot::XBotCoreModel::init(const std::string& urdf_filename,
     srdf_string = buffer_srdf.str();
 
     // parse the SRDF file and fill the data structure
-    return (ret && parseSRDF() && joint_limits_ok);
+    return ret && parseSRDF() && joint_limits_ok;
 }
 
-bool XBot::XBotCoreModel::init(const std::string& urdf_filename, const std::string& srdf_filename)
-{
+bool XBot::XBotCoreModel::init(const std::string &urdf_filename, const std::string &srdf_filename) {
     // SRDF path
     srdf_path = srdf_filename;
-
+    std::cout << "LOADING URDF FILE!!!!!!!!!!!!!!!!!!!\n";
     // joint_map_config path
     joint_map_config_path = "";
 
     // load URDF model from file
     urdf_model = loadURDF(urdf_filename);
+    std::cout << "FINISHED URDF FILE!!!!!!!!!!!!!!!!!!!\n";
 
     // check that all prismatic and revolute joints have their limits specified in the URDF!
     bool joint_limits_ok = check_joint_limits();
@@ -282,6 +262,7 @@ bool XBot::XBotCoreModel::init(const std::string& urdf_filename, const std::stri
     //parseJointMap();
 
     // create the robot KDL tree from the URDF model
+    std::cout << "START KDL FILE!!!!!!!!!!!!!!!!!!!\n";
     if( !kdl_parser::treeFromUrdfModel(*urdf_model, robot_tree) ) {
         DPRINTF("Failed to construct kdl tree");
         return false;
@@ -291,11 +272,11 @@ bool XBot::XBotCoreModel::init(const std::string& urdf_filename, const std::stri
     bool ret = this->initFile(*urdf_model, srdf_filename);
 
     // parse the SRDF file and fill the data structure
-    return (ret && parseSRDF() && joint_limits_ok);
+    std::cout << "START SRDF FILE!!!!!!!!!!!!!!!!!!!\n";
+    return ret && parseSRDF() && joint_limits_ok;
 }
 
-void XBot::XBotCoreModel::generate_robot(void)
-{
+void XBot::XBotCoreModel::generate_robot(void) {
     // generate the robot : map between tha chain name and the joint ids of the chain
     std::vector<std::string> actual_chain_names = get_chain_names();
     actual_chain_names.resize(actual_chain_names.size());
@@ -320,8 +301,7 @@ void XBot::XBotCoreModel::generate_robot(void)
     }
 }
 
-bool XBot::XBotCoreModel::get_enabled_joint_ids_in_chain(std::string chain_name, std::vector< int >& joint_ids) const
-{
+bool XBot::XBotCoreModel::get_enabled_joint_ids_in_chain(std::string chain_name, std::vector< int > &joint_ids) const {
     // check if the chain exists
     if( robot.count(chain_name) ) {
         joint_ids = robot.at(chain_name);
@@ -333,66 +313,52 @@ bool XBot::XBotCoreModel::get_enabled_joint_ids_in_chain(std::string chain_name,
     return false;
 }
 
-void XBot::XBotCoreModel::get_enabled_joint_ids(std::vector< int >& joint_ids) const
-{
+void XBot::XBotCoreModel::get_enabled_joint_ids(std::vector< int > &joint_ids) const {
     joint_ids.clear();
     for(const auto& c : robot) {
         joint_ids.insert( joint_ids.end(), c.second.begin(), c.second.end() );
     }
 }
 
-
-void XBot::XBotCoreModel::get_enabled_joint_names(std::vector< std::string >& joint_names) const
-{
+void XBot::XBotCoreModel::get_enabled_joint_names(std::vector< std::string > &joint_names) const {
     joint_names.clear();
     for(const auto& c : enabled_joints_in_chains) {
         joint_names.insert( joint_names.end(), c.second.begin(), c.second.end() );
     }
 }
 
-
-int XBot::XBotCoreModel::get_joint_num(std::string chain_name) const
-{
+int XBot::XBotCoreModel::get_joint_num(std::string chain_name) const {
     // check if the chain exists
     if( enabled_joints_in_chains.count(chain_name) ) {
         return enabled_joints_in_chains.at(chain_name).size();
-    }
-    else {
+    } else {
         DPRINTF("ERROR: requested chain in get_joint_num() does not exist.\n");
         return -1;
     }
 }
 
-
-int XBot::XBotCoreModel::get_joint_num() const
-{
+int XBot::XBotCoreModel::get_joint_num() const {
     return joint_num;
 }
 
-const std::string& XBot::XBotCoreModel::get_srdf_string() const
-{
+const std::string &XBot::XBotCoreModel::get_srdf_string() const {
  return srdf_string;
 }
 
-const std::string& XBot::XBotCoreModel::get_urdf_string() const
-{
+const std::string &XBot::XBotCoreModel::get_urdf_string() const {
   return urdf_string;
 }
 
-const std::vector< std::string >& XBot::XBotCoreModel::get_legs_chain() const
-{
+const std::vector< std::string > &XBot::XBotCoreModel::get_legs_chain() const {
     return legs_names;
 }
 
-const std::vector< std::string >& XBot::XBotCoreModel::get_arms_chain() const
-{
+const std::vector< std::string > &XBot::XBotCoreModel::get_arms_chain() const {
     return arms_names;
 }
 
-bool XBot::XBotCoreModel::check_joint_limits() const
-{
+bool XBot::XBotCoreModel::check_joint_limits() const {
     for( const auto& j_pair : urdf_model->joints_ ){
-
         const urdf::Joint& joint = *j_pair.second;
 
         if(joint.type == urdf::Joint::REVOLUTE || joint.type == urdf::Joint::PRISMATIC){
@@ -401,7 +367,6 @@ bool XBot::XBotCoreModel::check_joint_limits() const
                 return false;
             }
         }
-
     }
 
     return true;

@@ -51,6 +51,9 @@ message(STATUS "urdf_LIBRARY_DIRS: ${urdf_LIBRARY_DIRS}")
 message(STATUS "urdf_LIBRARIES: ${urdf_LIBRARIES}")
 
 FIND_PACKAGE(urdfdom REQUIRED)
+message(STATUS "urdfdom_INCLUDE_DIRS: ${urdfdom_INCLUDE_DIRS}")
+message(STATUS "urdfdom_LIBRARY_DIRS: ${urdfdom_LIBRARY_DIRS}")
+message(STATUS "urdfdom_LIBRARIES: ${urdfdom_LIBRARIES}")
 FIND_PACKAGE(kdl_parser REQUIRED)
 message(STATUS "kdl_parser_INCLUDE_DIRS: ${kdl_parser_INCLUDE_DIRS}")
 link_directories(SYSTEM ${kdl_parser_LIBRARY_DIRS})
@@ -69,11 +72,16 @@ file(GLOB_RECURSE XBotCoreModel_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/include" *
 
 ADD_LIBRARY(XBotCoreModel SHARED ${XBotCoreModel_INCLUDES} src/XBotCoreModel.cpp)
 
-TARGET_LINK_LIBRARIES(XBotCoreModel ${srdfdom_advr_LIBRARIES}
+find_library(srdfdom_advr_LIBRARY ${srdfdom_advr_LIBRARIES} HINTS ${srdfdom_advr_LIBRARY_DIRS})
+find_library(kdl_parser_LIBRARY ${kdl_parser_LIBRARIES} HINTS ${kdl_parser_LIBRARY_DIRS})
+message(STATUS "urdfdom_LIBRARIES: ${urdfdom_LIBRARY}")
+message(STATUS "kdl_parser_LIBRARY: ${kdl_parser_LIBRARY}")
+
+TARGET_LINK_LIBRARIES(XBotCoreModel ${srdfdom_advr_LIBRARY}
                                     ${urdfdom_LIBRARIES}
                                     ${Boost_LIBRARIES}
                                     yaml-cpp
-                                    ${kdl_parser_LIBRARIES}
+                                    ${kdl_parser_LIBRARY}
                                     )
 
 target_include_directories( XBotCoreModel PUBLIC
